@@ -3,6 +3,7 @@ import json
 
 from coursekit.day1_rag import RAGSystem
 from coursekit.day2_graph import AdaptiveRAG
+from coursekit.day3_agent import AgentHarness
 
 
 def main() -> None:
@@ -16,6 +17,10 @@ def main() -> None:
         return
     if args.day == "day2":
         result = AdaptiveRAG().ask(args.question)
+        print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))
+        return
+    if args.day == "day3":
+        result = AgentHarness().run(args.question)
         print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))
         return
     raise SystemExit(f"{args.day} is not implemented on this branch. Open labs/{args.day}.md")
