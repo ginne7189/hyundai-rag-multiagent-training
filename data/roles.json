@@ -1,0 +1,6 @@
+{
+  "primary_role": "regulation",
+  "primary_document_ids": ["regulation-ota-v2"],
+  "secondary_role": "cybersecurity",
+  "secondary_document_ids": ["csms-change-v3", "cyber-req-v2", "evidence-register-v4"]
+}

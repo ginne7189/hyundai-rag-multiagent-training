@@ -50,6 +50,26 @@ API 키를 `.env`나 Git에 커밋하지 마세요.
 4. 코드를 수정한 뒤 `make dayN-check`를 실행합니다.
 5. 새로운 OTA 변경 조건과 문서에 재적용합니다.
 
+## 개인 프로젝트
+
+기본 OTA 데이터를 수정하지 않고 `projects/` 아래의 별도 데이터로 자신의 업무 Case를 실행할 수 있습니다.
+
+```bash
+cp -R projects/template projects/my-project
+make project-check PROJECT=projects/my-project
+make project-day1 PROJECT=projects/my-project QUESTION="내 업무 질문"
+make project-eval PROJECT=projects/my-project
+```
+
+개인 프로젝트는 문서·정책·역할·평가 Case를 분리해 보존합니다. 상세 단계와 완료 기준은 `projects/README.md`를 확인합니다.
+
+## 복구와 합류
+
+- 기본 교육 코드는 `main`을 기준으로 하며 `git status`로 변경 파일을 확인합니다.
+- 개인 프로젝트는 새 폴더에 템플릿을 다시 복사해 복구할 수 있습니다.
+- Day별 자동검사가 실패해도 다음 Day에는 완성된 `main` 기준으로 다시 합류할 수 있습니다.
+- 실제 기밀·개인정보·API 키는 저장소 파일에 넣지 않습니다.
+
 ## 교안과 Codespaces의 역할
 
 - Notion: 개념의 정의, 필요한 이유, 구조 선택 기준, 실행 흐름과 실습 요구사항을 설명합니다.

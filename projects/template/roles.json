@@ -1,0 +1,6 @@
+{
+  "primary_role": "process",
+  "primary_document_ids": ["change-process-v1"],
+  "secondary_role": "quality",
+  "secondary_document_ids": ["quality-evidence-v2"]
+}

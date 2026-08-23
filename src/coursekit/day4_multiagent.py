@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 
+from coursekit.config import load_roles, resolve_data_dir
 from coursekit.day2_graph import AdaptiveRAG
 from coursekit.documents import load_documents
 from coursekit.models import MultiAgentAnswer, RAGAnswer, VerificationResult
@@ -48,27 +49,38 @@ class EvidenceVerifier:
 class SearchAndVerifySystem:
     """법규와 사이버보안 근거 수집을 분리하고 검증 단계에서 합치는 구조."""
 
-    def __init__(self, provider: CourseProvider | None = None):
+    def __init__(
+        self,
+        provider: CourseProvider | None = None,
+        data_dir: str | Path | None = None,
+    ):
         self.provider = provider or get_provider()
+        self.data_dir = resolve_data_dir(data_dir)
+        roles = load_roles(self.data_dir)
+        self.primary_role = roles["primary_role"]
+        self.secondary_role = roles["secondary_role"]
         self.regulation_agent = AdaptiveRAG(
-            provider=self.provider, allowed_document_ids={"regulation-ota-v2"}
+            provider=self.provider,
+            document_dir=self.data_dir / "documents",
+            allowed_document_ids=set(roles["primary_document_ids"]),
         )
         self.cybersecurity_agent = AdaptiveRAG(
             provider=self.provider,
-            allowed_document_ids={"csms-change-v3", "cyber-req-v2", "evidence-register-v4"},
+            document_dir=self.data_dir / "documents",
+            allowed_document_ids=set(roles["secondary_document_ids"]),
         )
-        self.verifier = EvidenceVerifier()
+        self.verifier = EvidenceVerifier(self.data_dir / "documents")
 
     def run(self, question: str) -> MultiAgentAnswer:
-        trace = ["agent=regulation:start", "agent=cybersecurity:start"]
+        trace = [f"agent={self.primary_role}:start", f"agent={self.secondary_role}:start"]
         regulation = self.regulation_agent.ask(question)
         cybersecurity = self.cybersecurity_agent.ask(question)
         trace.extend(
             [
-                f"agent=regulation:status={regulation.status}",
-                *[f"regulation.{step}" for step in regulation.trace],
-                f"agent=cybersecurity:status={cybersecurity.status}",
-                *[f"cybersecurity.{step}" for step in cybersecurity.trace],
+                f"agent={self.primary_role}:status={regulation.status}",
+                *[f"{self.primary_role}.{step}" for step in regulation.trace],
+                f"agent={self.secondary_role}:status={cybersecurity.status}",
+                *[f"{self.secondary_role}.{step}" for step in cybersecurity.trace],
                 "handoff=specialists_to_verifier",
             ]
         )

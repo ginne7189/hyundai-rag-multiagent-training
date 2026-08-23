@@ -1,4 +1,14 @@
+import warnings
+from pathlib import Path
 from typing import Literal, TypedDict
+
+from langchain_core._api.deprecation import LangChainPendingDeprecationWarning
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"The default value of `allowed_objects` will change in a future version.*",
+    category=LangChainPendingDeprecationWarning,
+)
 
 from langgraph.graph import END, START, StateGraph
 
@@ -26,9 +36,14 @@ class AdaptiveRAG:
         provider: CourseProvider | None = None,
         max_retries: int = 2,
         allowed_document_ids: set[str] | None = None,
+        document_dir: str | Path = "data/documents",
     ):
         self.provider = provider or get_provider()
-        self.rag = RAGSystem(provider=self.provider, allowed_document_ids=allowed_document_ids)
+        self.rag = RAGSystem(
+            provider=self.provider,
+            document_dir=document_dir,
+            allowed_document_ids=allowed_document_ids,
+        )
         self.max_retries = max_retries
         self.graph = self._build_graph()
 

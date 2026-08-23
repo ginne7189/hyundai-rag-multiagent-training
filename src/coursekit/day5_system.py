@@ -2,6 +2,7 @@ import json
 import time
 from pathlib import Path
 
+from coursekit.config import resolve_data_dir
 from coursekit.day3_agent import AgentHarness
 from coursekit.day4_multiagent import SearchAndVerifySystem
 from coursekit.models import EvaluationCaseResult, EvaluationSummary, FinalResult
@@ -9,10 +10,15 @@ from coursekit.providers import CourseProvider, get_provider
 
 
 class OperationalSystem:
-    def __init__(self, provider: CourseProvider | None = None):
+    def __init__(
+        self,
+        provider: CourseProvider | None = None,
+        data_dir: str | Path | None = None,
+    ):
         self.provider = provider or get_provider()
-        self.agent = AgentHarness(provider=self.provider)
-        self.multiagent = SearchAndVerifySystem(provider=self.provider)
+        self.data_dir = resolve_data_dir(data_dir)
+        self.agent = AgentHarness(provider=self.provider, data_dir=self.data_dir)
+        self.multiagent = SearchAndVerifySystem(provider=self.provider, data_dir=self.data_dir)
 
     def run(self, question: str, approval: str | None = None) -> FinalResult:
         started = time.perf_counter()
@@ -99,8 +105,9 @@ class OperationalSystem:
             trace=trace,
         )
 
-    def evaluate(self, path: str | Path = "data/eval_cases.json") -> EvaluationSummary:
-        cases = json.loads(Path(path).read_text(encoding="utf-8"))
+    def evaluate(self, path: str | Path | None = None) -> EvaluationSummary:
+        evaluation_path = Path(path) if path else self.data_dir / "eval_cases.json"
+        cases = json.loads(evaluation_path.read_text(encoding="utf-8"))
         results: list[EvaluationCaseResult] = []
         for case in cases:
             result = self.run(case["question"])

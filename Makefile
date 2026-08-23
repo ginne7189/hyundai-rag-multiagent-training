@@ -1,4 +1,7 @@
-.PHONY: install ui check day1-run day1-check day2-run day2-check day3-run day3-check day4-run day4-check day5-run day5-check final-eval
+.PHONY: install ui check day1-run day1-check day2-run day2-check day3-run day3-check day4-run day4-check day5-run day5-check final-eval project-check project-day1 project-day2 project-day3 project-day4 project-day5 project-eval
+
+PROJECT ?= projects/template
+QUESTION ?= 프로젝트 A의 변경 절차와 필요한 근거는?
 
 install:
 	pip install -e ".[dev]"
@@ -41,3 +44,24 @@ day5-check:
 
 final-eval:
 	course eval
+
+project-check:
+	course project-check --data-dir "$(PROJECT)"
+
+project-day1:
+	course day1 "$(QUESTION)" --data-dir "$(PROJECT)"
+
+project-day2:
+	course day2 "$(QUESTION)" --data-dir "$(PROJECT)"
+
+project-day3:
+	course day3 "$(QUESTION)" --data-dir "$(PROJECT)"
+
+project-day4:
+	course day4 "$(QUESTION)" --data-dir "$(PROJECT)"
+
+project-day5:
+	course day5 "$(QUESTION)" --data-dir "$(PROJECT)"
+
+project-eval:
+	course eval --data-dir "$(PROJECT)"

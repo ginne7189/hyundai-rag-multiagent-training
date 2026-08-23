@@ -1,6 +1,8 @@
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
+from coursekit.config import resolve_data_dir
 from coursekit.day2_graph import AdaptiveRAG
 from coursekit.documents import load_documents
 from coursekit.models import AgentAnswer, ToolCallRecord
@@ -19,12 +21,22 @@ class ToolSpec:
 class AgentHarness:
     """모델의 판단을 Tool 계약, 정책, 실행 한도와 Trace로 감싸는 교육용 Harness."""
 
-    def __init__(self, provider: CourseProvider | None = None, max_steps: int | None = None):
+    def __init__(
+        self,
+        provider: CourseProvider | None = None,
+        max_steps: int | None = None,
+        data_dir: str | Path | None = None,
+    ):
         self.provider = provider or get_provider()
-        self.policy: CoursePolicy = load_policy()
+        self.data_dir = resolve_data_dir(data_dir)
+        self.policy: CoursePolicy = load_policy(self.data_dir / "policies.json")
         self.max_steps = max_steps or self.policy.max_tool_calls
-        self.rag = AdaptiveRAG(provider=self.provider, max_retries=self.policy.max_retries)
-        self.documents = load_documents("data/documents")
+        self.rag = AdaptiveRAG(
+            provider=self.provider,
+            max_retries=self.policy.max_retries,
+            document_dir=self.data_dir / "documents",
+        )
+        self.documents = load_documents(self.data_dir / "documents")
         self.tools = {
             "rag_search": ToolSpec(
                 "rag_search",
@@ -73,15 +85,18 @@ class AgentHarness:
         text = result.answer + (f"\n출처: {citations}" if citations else "")
         return text, result.status
 
-    @staticmethod
-    def _evidence_status(question: str) -> tuple[str, str]:
-        return (
-            (
-                "완료: 공급사 서명 증적, 보안 검증 결과. "
-                "누락: 변경 후 재검증 결과, 요구사항-시험 추적성 연결."
-            ),
-            "ok",
-        )
+    def _evidence_status(self, question: str) -> tuple[str, str]:
+        evidence_chunks = [
+            chunk
+            for chunk in self.documents
+            if any(
+                keyword in f"{chunk.document_id} {chunk.document} {chunk.section}".lower()
+                for keyword in ["evidence", "증적", "현황", "상태"]
+            )
+        ]
+        if not evidence_chunks:
+            return "증적 상태를 확인할 문서가 없습니다.", "unsupported"
+        return "\n".join(chunk.text for chunk in evidence_chunks[:3]), "ok"
 
     def _version_compare(self, question: str) -> tuple[str, str]:
         latest: dict[str, int] = {}
@@ -94,8 +109,8 @@ class AgentHarness:
     def _review_request_draft(question: str) -> tuple[str, str]:
         return (
             (
-                "[검토 요청 초안]\n대상: OTA 변경 검토 담당자\n"
-                f"요청 내용: {question}\n확인 필요: 적용 법규, TARA 영향, 누락 증적\n"
+                "[검토 요청 초안]\n대상: 업무 검토 담당자\n"
+                f"요청 내용: {question}\n확인 필요: 적용 기준, 영향, 누락 근거\n"
                 "※ 초안만 생성했으며 발송하지 않았습니다."
             ),
             "ok",
