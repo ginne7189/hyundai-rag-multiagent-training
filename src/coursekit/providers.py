@@ -75,7 +75,7 @@ class MockProvider(CourseProvider):
         rewritten = question
         for source, target in replacements.items():
             rewritten = rewritten.replace(source, target)
-        return rewritten if rewritten != question else f"차량 문서 기준 {question}"
+        return rewritten
 
     def choose_tool(self, question: str, tool_names: list[str]) -> str:
         if any(word in question for word in ["차량 ID", "점검 상태", "상태 조회"]):
@@ -144,4 +144,3 @@ def get_provider() -> CourseProvider:
             raise RuntimeError("COURSE_MODE=openai requires OPENAI_API_KEY")
         return OpenAIProvider()
     return MockProvider()
-
