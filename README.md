@@ -38,6 +38,29 @@ export OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 
 API 키를 `.env`나 Git에 커밋하지 마세요.
 
+## 원격 SSH — 강사 점검용
+
+교육생의 기본 실습은 웹 Codespaces만으로 진행할 수 있습니다. 강사가 원격으로 환경을 점검할 때는 저장소의 devcontainer에 포함된 SSH 서버 기능을 사용합니다.
+
+기존 Codespace가 SSH 기능 추가 전에 만들어졌다면 컨테이너를 다시 빌드해야 합니다.
+
+```bash
+gh codespace list
+gh codespace rebuild --full -c <CODESPACE_NAME>
+gh codespace ssh -c <CODESPACE_NAME>
+```
+
+웹 화면에서는 명령 팔레트의 `Codespaces: Rebuild Container`를 실행하거나 새 Codespace를 만들 수 있습니다. 재빌드 직후 터널 연결이 지연되면 Codespace를 중지한 뒤 다시 시작합니다.
+
+SSH 접속 후 Codespaces Secret의 주입 여부를 확인합니다.
+
+```bash
+gh codespace ssh -c <CODESPACE_NAME>
+test -n "$OPENAI_API_KEY" && echo OPENAI_API_KEY_PRESENT
+```
+
+Secret의 실제 값은 출력하지 마세요. `OPENAI_API_KEY_PRESENT`만 확인합니다.
+
 ## 실습 기준 버전
 
 현재 OTA·법규·CSMS·TARA 시나리오는 `main`을 기준으로 진행합니다. 교육생은 완성 시스템을 먼저 실행한 뒤 `labs/dayN.md`의 요구사항에 따라 해당 일차 코드를 변경하고 자동검사를 실행합니다. 저장소의 기존 `dayN-start`·`dayN-complete` 브랜치는 초기 일반 차량 예제의 이력 보존용이며 이번 과정의 시작점으로 사용하지 않습니다.
