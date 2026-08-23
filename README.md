@@ -38,17 +38,9 @@ export OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 
 API 키를 `.env`나 Git에 커밋하지 마세요.
 
-## 일차별 브랜치
+## 실습 기준 버전
 
-```text
-day1-start  → day1-complete
-day2-start  → day2-complete
-day3-start  → day3-complete
-day4-start  → day4-complete
-day5-start  → day5-complete
-```
-
-전날 실습을 완료하지 못해도 다음 날 `dayN-start`에서 시작할 수 있습니다.
+현재 OTA·법규·CSMS·TARA 시나리오는 `main`을 기준으로 진행합니다. 교육생은 완성 시스템을 먼저 실행한 뒤 `labs/dayN.md`의 요구사항에 따라 해당 일차 코드를 변경하고 자동검사를 실행합니다. 저장소의 기존 `dayN-start`·`dayN-complete` 브랜치는 초기 일반 차량 예제의 이력 보존용이며 이번 과정의 시작점으로 사용하지 않습니다.
 
 ## 교육생 작업 방식
 
