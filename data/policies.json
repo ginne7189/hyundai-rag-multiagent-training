@@ -1,0 +1,7 @@
+{
+  "max_retries": 2,
+  "required_terms_for_regulation": ["차종"],
+  "approval_actions": ["검토 요청 발송", "외부로 전송", "담당자에게 발송"],
+  "prohibited_actions": ["법규 적용 상태 변경", "위험 수용", "출시 승인", "승인해 줘"],
+  "max_tool_calls": 3
+}

@@ -4,29 +4,35 @@ from coursekit.providers import MockProvider
 
 
 def test_valid_search_answer_passes_independent_verifier() -> None:
-    result = SearchAndVerifySystem(provider=MockProvider()).run("회생제동 단계 변경 방법과 출처를 알려줘")
+    result = SearchAndVerifySystem(provider=MockProvider()).run(
+        "X 차종 OTA 변경의 적용 법규와 사이버보안 증적을 알려줘"
+    )
     assert result.status == "verified"
     assert result.verification.verdict == "pass"
-    assert "handoff=search_to_verifier" in result.trace
+    assert "handoff=specialists_to_verifier" in result.trace
+    assert {"regulation-ota-v2", "cyber-req-v2"} & {
+        citation.document_id for citation in result.search_result.citations
+    }
 
 
 def test_nonexistent_or_old_source_is_rejected() -> None:
     draft = RAGAnswer(
-        answer="패들 시프트로 회생제동 단계를 조절합니다.",
+        answer="OTA 업데이트에는 무결성 검증이 필요합니다.",
         status="grounded",
         citations=[
             Citation(
-                document="전기차 사용자 안내서",
-                page=42,
-                section="회생제동 시스템",
-                evidence="패들 시프트로 회생제동 단계를 조절합니다.",
-                document_id="ev-manual-v1",
+                document="사이버보안 요구사항",
+                page=3,
+                section="업데이트 무결성",
+                evidence="OTA 업데이트에는 무결성 검증이 필요합니다.",
+                document_id="cyber-req-v2",
+                version=1,
             )
         ],
     )
-    result = EvidenceVerifier().verify("회생제동 단계는?", draft)
+    result = EvidenceVerifier().verify("OTA 업데이트 조건은?", draft)
     assert result.verdict == "reject"
-    assert any("오래된" in issue for issue in result.issues)
+    assert any("최신 승인 버전" in issue for issue in result.issues)
 
 
 def test_unsupported_claim_is_rejected() -> None:
@@ -35,15 +41,15 @@ def test_unsupported_claim_is_rejected() -> None:
         status="grounded",
         citations=[
             Citation(
-                document="전기차 사용자 안내서",
-                page=42,
-                section="회생제동 시스템",
-                evidence="패들 시프트로 회생제동 단계를 조절할 수 있습니다.",
-                document_id="ev-manual-v2",
+                document="사이버보안 요구사항",
+                page=3,
+                section="업데이트 무결성",
+                evidence="서명과 무결성 검증 결과를 보존합니다.",
+                document_id="cyber-req-v2",
+                version=2,
             )
         ],
     )
-    result = EvidenceVerifier().verify("회생제동 단계는?", draft)
+    result = EvidenceVerifier().verify("OTA 업데이트 조건은?", draft)
     assert result.verdict == "reject"
     assert any("주요 표현" in issue for issue in result.issues)
-

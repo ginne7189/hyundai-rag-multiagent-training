@@ -1,9 +1,10 @@
-import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
 from coursekit.day2_graph import AdaptiveRAG
+from coursekit.documents import load_documents
 from coursekit.models import AgentAnswer, ToolCallRecord
+from coursekit.policies import CoursePolicy, load_policy
 from coursekit.providers import CourseProvider, get_provider
 
 
@@ -16,72 +17,110 @@ class ToolSpec:
 
 
 class AgentHarness:
-    def __init__(self, provider: CourseProvider | None = None, max_steps: int = 3):
+    """모델의 판단을 Tool 계약, 정책, 실행 한도와 Trace로 감싸는 교육용 Harness."""
+
+    def __init__(self, provider: CourseProvider | None = None, max_steps: int | None = None):
         self.provider = provider or get_provider()
-        self.max_steps = max_steps
-        self.rag = AdaptiveRAG(provider=self.provider)
+        self.policy: CoursePolicy = load_policy()
+        self.max_steps = max_steps or self.policy.max_tool_calls
+        self.rag = AdaptiveRAG(provider=self.provider, max_retries=self.policy.max_retries)
+        self.documents = load_documents("data/documents")
         self.tools = {
             "rag_search": ToolSpec(
                 "rag_search",
-                "차량 매뉴얼·정비·품질 문서에서 근거와 출처를 검색한다.",
+                "승인된 법규·CSMS·TARA 문서에서 근거와 출처를 검색한다.",
                 self._rag_search,
             ),
-            "vehicle_status": ToolSpec(
-                "vehicle_status",
-                "차량 ID의 읽기 전용 점검 상태를 조회한다. 값을 변경하지 않는다.",
-                self._vehicle_status,
+            "evidence_status": ToolSpec(
+                "evidence_status",
+                "현재 증적의 완료·누락 상태를 읽기 전용으로 조회한다.",
+                self._evidence_status,
             ),
-            "calculator": ToolSpec(
-                "calculator",
-                "수량의 합계·나눗셈 등 단순 계산을 수행한다.",
-                self._calculator,
+            "version_compare": ToolSpec(
+                "version_compare",
+                "문서 ID별 최신 승인 버전을 비교한다.",
+                self._version_compare,
+            ),
+            "review_request_draft": ToolSpec(
+                "review_request_draft",
+                "사람이 검토할 요청 문안만 작성하며 전송하지 않는다.",
+                self._review_request_draft,
+                permission="draft_only",
             ),
         }
-        self.blocked_actions = (
-            "값을 변경",
-            "제어 값을",
-            "문서를 삭제",
-            "외부로 전송",
-            "승인 없이",
-        )
+
+    def validate_request(self, question: str) -> tuple[str, str] | None:
+        if "99조" in question or "99항" in question:
+            return "존재 여부를 확인할 수 없는 조항은 답변하지 않습니다.", "unsupported_claim"
+        if any(term in question for term in ["법규", "적용 여부"]) and not any(
+            term in question for term in ["X 차종", "X차종", "차종 X"]
+        ):
+            return "법규 적용 판단을 위해 차종을 입력해 주세요.", "needs_input"
+        return None
+
+    def classify_action(self, question: str) -> str:
+        if any(action in question for action in self.policy.prohibited_actions):
+            return "forbidden"
+        if any(action in question for action in self.policy.approval_actions):
+            return "human_review"
+        if any(word in question for word in ["충돌", "판단 불일치"]):
+            return "human_review"
+        return "read_only"
 
     def _rag_search(self, question: str) -> tuple[str, str]:
         result = self.rag.ask(question)
-        citations = ", ".join(f"{c.document} p.{c.page}" for c in result.citations)
+        citations = ", ".join(f"{c.document} v{c.version} p.{c.page}" for c in result.citations)
         text = result.answer + (f"\n출처: {citations}" if citations else "")
         return text, result.status
 
     @staticmethod
-    def _vehicle_status(question: str) -> tuple[str, str]:
-        match = re.search(r"(?:ID\s*)?(\d+)", question, re.IGNORECASE)
-        vehicle_id = match.group(1) if match else "unknown"
-        statuses = {
-            "101": "정기 점검 완료 · 다음 점검 예정일 2026-09-15",
-            "102": "점검 필요 · 타이어 공기압 확인 예정",
-        }
-        if vehicle_id not in statuses:
-            return f"차량 ID {vehicle_id}의 상태를 찾을 수 없습니다.", "not_found"
-        return f"차량 ID {vehicle_id}: {statuses[vehicle_id]}", "ok"
+    def _evidence_status(question: str) -> tuple[str, str]:
+        return (
+            (
+                "완료: 공급사 서명 증적, 보안 검증 결과. "
+                "누락: 변경 후 재검증 결과, 요구사항-시험 추적성 연결."
+            ),
+            "ok",
+        )
+
+    def _version_compare(self, question: str) -> tuple[str, str]:
+        latest: dict[str, int] = {}
+        for chunk in self.documents:
+            latest[chunk.document_id] = max(latest.get(chunk.document_id, 0), chunk.version)
+        summary = ", ".join(f"{doc_id}=v{version}" for doc_id, version in sorted(latest.items()))
+        return f"현재 승인 문서 버전: {summary}", "ok"
 
     @staticmethod
-    def _calculator(question: str) -> tuple[str, str]:
-        numbers = [float(value) for value in re.findall(r"\d+(?:\.\d+)?", question)]
-        if len(numbers) < 2:
-            return "계산에 필요한 숫자가 부족합니다.", "invalid_input"
-        if any(word in question for word in ["균등", "나누", "대당"]):
-            if numbers[1] == 0:
-                return "0으로 나눌 수 없습니다.", "invalid_input"
-            return f"계산 결과: {numbers[0] / numbers[1]:g}", "ok"
-        return f"계산 결과: {sum(numbers):g}", "ok"
+    def _review_request_draft(question: str) -> tuple[str, str]:
+        return (
+            (
+                "[검토 요청 초안]\n대상: OTA 변경 검토 담당자\n"
+                f"요청 내용: {question}\n확인 필요: 적용 법규, TARA 영향, 누락 증적\n"
+                "※ 초안만 생성했으며 발송하지 않았습니다."
+            ),
+            "ok",
+        )
 
     def run(self, question: str) -> AgentAnswer:
-        trace = [f"goal={question}", f"max_steps={self.max_steps}"]
-        if any(action in question for action in self.blocked_actions):
-            trace.append("blocked=write_or_high_impact_action")
+        trace = [f"goal={question}", f"max_steps={self.max_steps}", "validate_request"]
+        validation = self.validate_request(question)
+        if validation:
+            answer, status = validation
+            return AgentAnswer(answer=answer, status=status, trace=trace + [f"stop={status}"])
+
+        risk = self.classify_action(question)
+        trace.append(f"action_class={risk}")
+        if risk == "forbidden":
             return AgentAnswer(
-                answer="변경 또는 고영향 작업은 자동 실행하지 않습니다. 사람의 승인이 필요합니다.",
+                answer="위험 수용·출시 승인·법규 상태 변경은 Agent가 실행할 수 없습니다.",
+                status="forbidden",
+                trace=trace + ["stop=policy_denied"],
+            )
+        if risk == "human_review":
+            return AgentAnswer(
+                answer="고영향 작업 또는 충돌 판단은 사람의 검토가 필요합니다.",
                 status="human_review",
-                trace=trace,
+                trace=trace + ["stop=human_review"],
             )
 
         tool_name = self.provider.choose_tool(question, list(self.tools))

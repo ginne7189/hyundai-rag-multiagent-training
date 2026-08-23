@@ -17,7 +17,14 @@ class InMemoryVectorStore:
         self.chunks = chunks
         self.provider = provider
         self.vectors = np.asarray(
-            provider.embed([f"{chunk.section} {chunk.text}" for chunk in chunks]), dtype=float
+            provider.embed(
+                [
+                    f"{chunk.document} {chunk.section} {chunk.text} {chunk.market or ''} "
+                    f"{chunk.vehicle or ''} {chunk.status or ''}"
+                    for chunk in chunks
+                ]
+            ),
+            dtype=float,
         )
 
     def search(self, query: str, top_k: int = 3) -> list[SearchHit]:
@@ -25,4 +32,3 @@ class InMemoryVectorStore:
         scores = self.vectors @ query_vector
         indices = np.argsort(scores)[::-1][:top_k]
         return [SearchHit(self.chunks[index], float(scores[index])) for index in indices]
-

@@ -7,16 +7,16 @@ def system(max_retries: int = 2) -> AdaptiveRAG:
 
 
 def test_direct_question_uses_short_path() -> None:
-    result = system().ask("회생제동 단계는 어떻게 조절하나요?")
+    result = system().ask("X 차종 OTA 업데이트 조건은 무엇인가요?")
     assert result.status == "grounded"
     assert not any(item.startswith("rewrite=") for item in result.trace)
 
 
 def test_failed_query_is_rewritten_and_retried() -> None:
-    result = system().ask("브레이크 에너지 회수 세기를 바꾸는 방법은?")
+    result = system().ask("X 차종 원격 펌웨어 갱신 조건은?")
     assert result.status == "grounded"
     assert any(item.startswith("rewrite=") for item in result.trace)
-    assert result.citations[0].document_id == "ev-manual-v2"
+    assert result.citations[0].document_id == "regulation-ota-v2"
 
 
 def test_missing_evidence_stops_within_limit() -> None:
@@ -24,4 +24,3 @@ def test_missing_evidence_stops_within_limit() -> None:
     assert result.status == "insufficient_evidence"
     assert "stop=max_retries_or_no_evidence" in result.trace
     assert sum(item.startswith("retrieve(") for item in result.trace) == 2
-

@@ -7,9 +7,20 @@ from coursekit.vectorstore import InMemoryVectorStore
 
 
 class RAGSystem:
-    def __init__(self, provider: CourseProvider | None = None, document_dir: str | Path = "data/documents"):
+    def __init__(
+        self,
+        provider: CourseProvider | None = None,
+        document_dir: str | Path = "data/documents",
+        allowed_document_ids: set[str] | None = None,
+    ):
         self.provider = provider or get_provider()
-        self.chunks = load_documents(document_dir)
+        chunks = load_documents(document_dir)
+        self.chunks = [
+            chunk
+            for chunk in chunks
+            if chunk.status == "approved"
+            and (allowed_document_ids is None or chunk.document_id in allowed_document_ids)
+        ]
         self.store = InMemoryVectorStore(self.chunks, self.provider)
 
     def retrieve(self, question: str, top_k: int = 3):
@@ -35,9 +46,11 @@ class RAGSystem:
                 section=chunk.section,
                 evidence=chunk.text,
                 document_id=chunk.document_id,
+                version=chunk.version,
+                market=chunk.market,
+                vehicle=chunk.vehicle,
             )
             for chunk in relevant
         ]
         trace.extend(["generate", f"citations={len(citations)}", "status=grounded"])
         return RAGAnswer(answer=answer, citations=citations, status="grounded", trace=trace)
-

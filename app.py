@@ -9,14 +9,18 @@ from coursekit.day5_system import OperationalSystem
 st.set_page_config(page_title="RAG + Multi-Agent", layout="wide")
 st.title("현대자동차 RAG + Multi-Agent 실습")
 day = st.sidebar.selectbox("실행 단계", ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"])
-question = st.text_input("질문", "회생제동 단계는 어떻게 조절하나요?")
+question = st.text_input("질문", "X 차종 OTA 변경의 적용 법규와 사이버보안 증적을 알려줘")
+approval = None
+if day == "Day 5":
+    approval_label = st.sidebar.selectbox("사람 검토 결과", ["미결정", "승인", "거부"])
+    approval = {"승인": "approve", "거부": "reject"}.get(approval_label)
 if st.button("실행"):
     systems = {
         "Day 1": lambda: RAGSystem().ask(question),
         "Day 2": lambda: AdaptiveRAG().ask(question),
         "Day 3": lambda: AgentHarness().run(question),
         "Day 4": lambda: SearchAndVerifySystem().run(question),
-        "Day 5": lambda: OperationalSystem().run(question),
+        "Day 5": lambda: OperationalSystem().run(question, approval=approval),
     }
     result = systems[day]()
     st.subheader("답변")
@@ -28,4 +32,3 @@ if st.button("실행"):
 
 if day == "Day 5" and st.sidebar.button("전체 평가 실행"):
     st.sidebar.json(OperationalSystem().evaluate().model_dump())
-

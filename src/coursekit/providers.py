@@ -54,8 +54,14 @@ class MockProvider(CourseProvider):
         return vectors
 
     def relevant(self, question: str, chunk: DocumentChunk, score: float) -> bool:
-        query = set(_tokens(question))
-        content = set(_tokens(f"{chunk.section} {chunk.text}"))
+        generic = {"x", "차종", "조건", "필요한", "알려줘", "출처", "무엇인가요"}
+        query = set(_tokens(question)) - generic
+        content = set(
+            _tokens(
+                f"{chunk.document} {chunk.section} {chunk.text} {chunk.market or ''} "
+                f"{chunk.vehicle or ''} {chunk.status or ''}"
+            )
+        )
         return score >= 0.08 and bool(query & content)
 
     def answer(self, question: str, chunks: list[DocumentChunk]) -> str:
@@ -66,10 +72,10 @@ class MockProvider(CourseProvider):
 
     def rewrite(self, question: str, attempt: int) -> str:
         replacements = {
-            "브레이크 에너지 회수": "회생제동",
-            "세기": "단계",
-            "바꾸는": "조절하는",
-            "공기 넣기": "타이어 공기압 보충",
+            "원격 펌웨어 갱신": "무선 소프트웨어 업데이트",
+            "원격 업데이트": "무선 소프트웨어 업데이트",
+            "사이버 보안": "사이버보안",
+            "위협 분석": "TARA 위협 분석 및 위험 평가",
         }
         rewritten = question
         for source, target in replacements.items():
@@ -77,11 +83,19 @@ class MockProvider(CourseProvider):
         return rewritten
 
     def choose_tool(self, question: str, tool_names: list[str]) -> str:
-        if any(word in question for word in ["차량 ID", "점검 상태", "상태 조회"]):
-            return "vehicle_status"
-        if any(word in question for word in ["계산", "합계", "균등", "나누"]):
-            return "calculator"
-        if any(word in question for word in ["방법", "절차", "문서", "출처", "회생", "충전", "타이어"]):
+        if any(word in question for word in ["증적 상태", "제출 상태", "누락 증적"]):
+            return "evidence_status"
+        if any(word in question for word in ["버전 비교", "버전을 비교", "최신 버전", "문서 버전"]):
+            return "version_compare"
+        if any(word in question for word in ["검토 요청 초안", "검토 문안", "검토 요청 작성"]):
+            return "review_request_draft"
+        if any(
+            word in question
+            for word in [
+                "방법", "절차", "문서", "출처", "법규", "OTA", "CSMS", "TARA",
+                "사이버보안", "보안 요구사항", "업데이트", "펌웨어",
+            ]
+        ):
             return "rag_search"
         return "unsupported"
 

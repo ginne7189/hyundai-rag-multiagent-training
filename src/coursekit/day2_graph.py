@@ -21,9 +21,14 @@ class RAGState(TypedDict):
 
 
 class AdaptiveRAG:
-    def __init__(self, provider: CourseProvider | None = None, max_retries: int = 2):
+    def __init__(
+        self,
+        provider: CourseProvider | None = None,
+        max_retries: int = 2,
+        allowed_document_ids: set[str] | None = None,
+    ):
         self.provider = provider or get_provider()
-        self.rag = RAGSystem(provider=self.provider)
+        self.rag = RAGSystem(provider=self.provider, allowed_document_ids=allowed_document_ids)
         self.max_retries = max_retries
         self.graph = self._build_graph()
 
@@ -78,6 +83,9 @@ class AdaptiveRAG:
                 section=chunk.section,
                 evidence=chunk.text,
                 document_id=chunk.document_id,
+                version=chunk.version,
+                market=chunk.market,
+                vehicle=chunk.vehicle,
             )
             for chunk in chunks
         ]

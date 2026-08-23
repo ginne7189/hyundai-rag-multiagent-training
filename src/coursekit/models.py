@@ -7,6 +7,9 @@ class Citation(BaseModel):
     section: str
     evidence: str
     document_id: str
+    version: int | None = None
+    market: str | None = None
+    vehicle: str | None = None
 
 
 class RAGAnswer(BaseModel):
@@ -49,6 +52,7 @@ class FinalResult(BaseModel):
     needs_human_review: bool = False
     approval_status: str | None = None
     metrics: dict[str, int | float | str] = Field(default_factory=dict)
+    citations: list[Citation] = Field(default_factory=list)
     trace: list[str] = Field(default_factory=list)
 
 
@@ -56,6 +60,11 @@ class EvaluationCaseResult(BaseModel):
     question: str
     expected_behavior: str
     actual_status: str
+    expected_documents: list[str] = Field(default_factory=list)
+    actual_documents: list[str] = Field(default_factory=list)
+    behavior_passed: bool = False
+    documents_passed: bool = False
+    trace_passed: bool = False
     passed: bool
 
 
