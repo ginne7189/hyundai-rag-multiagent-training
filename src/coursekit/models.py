@@ -34,3 +34,10 @@ class VerificationResult(BaseModel):
     issues: list[str] = Field(default_factory=list)
     required_action: str
 
+
+class MultiAgentAnswer(BaseModel):
+    answer: str
+    status: str
+    search_result: RAGAnswer
+    verification: VerificationResult
+    trace: list[str] = Field(default_factory=list)
