@@ -1,4 +1,4 @@
-.PHONY: install ui check day1-run day1-check day2-run day2-check day3-run day3-check day4-run day4-check day5-run day5-check final-eval project-check project-day1 project-day2 project-day3 project-day4 project-day5 project-eval
+.PHONY: install ui check day1-run day1-check day2-run day2-check day3-run day3-check day4-run day4-check day5-run day5-check final-eval project-check-day1 project-check project-day1 project-day2 project-day3 project-day4 project-day5 project-eval
 
 PROJECT ?= projects/template
 QUESTION ?= 프로젝트 A의 변경 절차와 필요한 근거는?
@@ -47,6 +47,9 @@ final-eval:
 
 project-check:
 	course project-check --data-dir "$(PROJECT)"
+
+project-check-day1:
+	course project-check-day1 --data-dir "$(PROJECT)"
 
 project-day1:
 	course day1 "$(QUESTION)" --data-dir "$(PROJECT)"

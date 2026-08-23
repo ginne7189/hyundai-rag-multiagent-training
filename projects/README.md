@@ -6,13 +6,16 @@
 
 ```bash
 cp -R projects/template projects/my-project
-make project-check PROJECT=projects/my-project
+make project-check-day1 PROJECT=projects/my-project
 ```
 
-다음 파일만 자신의 업무에 맞게 바꿉니다.
+Day 1에는 다음 파일만 자신의 업무에 맞게 바꿉니다.
 
 - `project_brief.md`: 해결할 문제·사용자·자동화 금지 범위
 - `documents/*.md`: 비식별 교육용 업무 문서
+
+아래 파일은 해당 날짜에 차례로 수정합니다. Day 1에 미리 완성할 필요가 없습니다.
+
 - `policies.json`: 재시도·승인·금지 행동
 - `roles.json`: 두 전문 역할과 담당 문서
 - `eval_cases.json`: 정상·정보 부족·거절·사람 검토·금지 Case

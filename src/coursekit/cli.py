@@ -8,19 +8,35 @@ from coursekit.day2_graph import AdaptiveRAG
 from coursekit.day3_agent import AgentHarness
 from coursekit.day4_multiagent import SearchAndVerifySystem
 from coursekit.day5_system import OperationalSystem
-from coursekit.project import validate_project
+from coursekit.project import validate_day1_project, validate_project
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Five-day course CLI")
     parser.add_argument(
-        "day", choices=["day1", "day2", "day3", "day4", "day5", "eval", "project-check"]
+        "day",
+        choices=[
+            "day1",
+            "day2",
+            "day3",
+            "day4",
+            "day5",
+            "eval",
+            "project-check-day1",
+            "project-check",
+        ],
     )
     parser.add_argument("question", nargs="?", default="")
     parser.add_argument("--data-dir", default=None)
     args = parser.parse_args()
     data_dir = resolve_data_dir(args.data_dir)
     document_dir = Path(data_dir) / "documents"
+    if args.day == "project-check-day1":
+        result = validate_day1_project(data_dir)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if not result["valid"]:
+            raise SystemExit(1)
+        return
     if args.day == "project-check":
         result = validate_project(data_dir)
         print(json.dumps(result, ensure_ascii=False, indent=2))

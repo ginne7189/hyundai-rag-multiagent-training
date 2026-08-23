@@ -6,6 +6,34 @@ from coursekit.documents import load_documents
 from coursekit.policies import load_policy
 
 
+def validate_day1_project(data_dir: str | Path | None = None) -> dict:
+    """Validate only the project material required at the end of Day 1."""
+    project_dir = resolve_data_dir(data_dir)
+    required = [project_dir / "project_brief.md", project_dir / "documents"]
+    missing = [str(path) for path in required if not path.exists()]
+    if missing:
+        return {"valid": False, "missing": missing, "errors": []}
+
+    errors: list[str] = []
+    try:
+        documents = load_documents(project_dir / "documents")
+    except (OSError, ValueError) as exc:
+        documents = []
+        errors.append(f"documents: {exc}")
+
+    document_ids = {chunk.document_id for chunk in documents}
+    if len(document_ids) < 2:
+        errors.append("서로 다른 document_id를 가진 문서가 2개 이상 필요합니다.")
+
+    return {
+        "valid": not errors,
+        "project_dir": str(project_dir),
+        "document_count": len(document_ids),
+        "chunk_count": len(documents),
+        "errors": errors,
+    }
+
+
 def validate_project(data_dir: str | Path | None = None) -> dict:
     project_dir = resolve_data_dir(data_dir)
     required = [

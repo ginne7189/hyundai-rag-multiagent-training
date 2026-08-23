@@ -24,10 +24,10 @@ OTA 변경 문서를 검색하는 `RAGSystem.ask()`를 완성해 `answer`, `cita
 
 ## 개인 프로젝트 연결
 
-`projects/template`을 별도 폴더로 복사하고 업무 문서 2개와 질문 3개를 준비합니다. 기본 `data/`는 수정하지 않습니다.
+`projects/template`을 별도 폴더로 복사하고 업무 문서 2개, 정상 질문 하나, 근거 없음 질문 하나를 준비합니다. 기본 `data/`는 수정하지 않습니다. Day 1에는 `project_brief.md`와 `documents/`만 자신의 소재로 바꿉니다.
 
 ```bash
-make project-check PROJECT=projects/my-project
+make project-check-day1 PROJECT=projects/my-project
 make project-day1 PROJECT=projects/my-project QUESTION="내 업무 질문"
 ```
 
