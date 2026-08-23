@@ -5,6 +5,7 @@ from coursekit.day1_rag import RAGSystem
 from coursekit.day2_graph import AdaptiveRAG
 from coursekit.day3_agent import AgentHarness
 from coursekit.day4_multiagent import SearchAndVerifySystem
+from coursekit.day5_system import OperationalSystem
 
 
 def main() -> None:
@@ -26,6 +27,14 @@ def main() -> None:
         return
     if args.day == "day4":
         result = SearchAndVerifySystem().run(args.question)
+        print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))
+        return
+    if args.day == "day5":
+        result = OperationalSystem().run(args.question)
+        print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))
+        return
+    if args.day == "eval":
+        result = OperationalSystem().evaluate()
         print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))
         return
     raise SystemExit(f"{args.day} is not implemented on this branch. Open labs/{args.day}.md")

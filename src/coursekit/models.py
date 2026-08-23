@@ -41,3 +41,26 @@ class MultiAgentAnswer(BaseModel):
     search_result: RAGAnswer
     verification: VerificationResult
     trace: list[str] = Field(default_factory=list)
+
+
+class FinalResult(BaseModel):
+    answer: str
+    status: str
+    needs_human_review: bool = False
+    approval_status: str | None = None
+    metrics: dict[str, int | float | str] = Field(default_factory=dict)
+    trace: list[str] = Field(default_factory=list)
+
+
+class EvaluationCaseResult(BaseModel):
+    question: str
+    expected_behavior: str
+    actual_status: str
+    passed: bool
+
+
+class EvaluationSummary(BaseModel):
+    total: int
+    passed: int
+    pass_rate: float
+    cases: list[EvaluationCaseResult]

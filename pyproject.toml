@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "hyundai-rag-multiagent-training"
@@ -25,8 +25,8 @@ dev = [
 [project.scripts]
 course = "coursekit.cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/coursekit"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
