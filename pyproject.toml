@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hyundai-rag-multiagent-training"
+version = "0.1.0"
+description = "Five-day RAG, LangGraph, and multi-agent training repository"
+requires-python = ">=3.11"
+dependencies = [
+  "langgraph>=1.0,<2",
+  "numpy>=2.0,<3",
+  "openai>=2.0,<3",
+  "pydantic>=2.10,<3",
+  "python-dotenv>=1.0,<2",
+  "streamlit>=1.45,<2"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "ruff>=0.11,<1"
+]
+
+[project.scripts]
+course = "coursekit.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/coursekit"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
