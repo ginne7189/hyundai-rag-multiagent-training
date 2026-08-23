@@ -52,6 +52,8 @@ gh codespace ssh -c <CODESPACE_NAME>
 
 웹 화면에서는 명령 팔레트의 `Codespaces: Rebuild Container`를 실행하거나 새 Codespace를 만들 수 있습니다. 재빌드 직후 터널 연결이 지연되면 Codespace를 중지한 뒤 다시 시작합니다.
 
+Full Rebuild가 끝난 뒤에도 `postCreateCommand`가 Python 패키지를 설치하는 동안에는 `make check`가 실패할 수 있습니다. Codespaces 화면의 **Running postCreateCommand**가 완료된 뒤 실행하세요.
+
 SSH 접속 후 Codespaces Secret의 주입 여부를 확인합니다.
 
 ```bash
